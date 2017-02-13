@@ -4,7 +4,7 @@
 */
 
 /* Reset */
-* { margin: 0; padding: 0; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; margin-top: 5%;}
+* { margin: 0; padding: 0; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; margin-top: 1%;}
 
 /* Layout */
 body { background-color: #fff; color: #333;	font: 14px/20px "HelveticaNeue-Light", "HelveticaNeue", Helvetica, Arial, sans-serif; text-align: center;}
