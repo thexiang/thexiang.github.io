@@ -1,0 +1,212 @@
+---
+title: "Analysis of Damage of Weather"
+author: "Xiang"
+date: "January 9, 2017"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Synopsis
+  This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+  This study will show which types of events are most harmful with respect to population health and greatest economic consequences.  
+  
+  
+##Data Processing
+1. Load required libraries and load the raw data that is provided by the Course, and then only include useful data.
+```{r, results='hide'}
+#Load Libraries
+library("dplyr")
+library("ggplot2")
+
+#load unzipped data
+RawData <- read.csv(
+  bzfile("repdata_data_StormData.csv.bz2"),
+  sep = ",")
+```
+
+```{r}
+#peak Raw data
+str(RawData)
+
+
+#clean data, and keep columns will use in the analysis only
+Data <- RawData %>% 
+  filter( EVTYPE != "?" 
+          & (FATALITIES > 0 | INJURIES > 0 |  PROPDMG > 0 | CROPDMG > 0)) %>% 
+  select(EVTYPE, 
+         FATALITIES,  
+         INJURIES,  
+         PROPDMG,  
+         PROPDMGEXP, 
+         CROPDMG, 
+         CROPDMGEXP)
+#Peak cleaned Data
+str(Data)
+```
+
+
+2.Manully mapping eventtype into ten major categories
+```{r}
+###Data Mapping
+#Make everything upper case
+Data$EVTYPE <- toupper(Data$EVTYPE)
+
+#grouping keywords into 10 major categories.
+Data$EVTYPE <- gsub('.*COLD.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*SNOW.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*FREEZ.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*WINTER.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*HYPOTHERMIA.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*ICY.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*LOW TEMPERATURE RECORD.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*ICE.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*FROST.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*LO.*TEMP.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*WINTRY.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*MIXED PRECIP.*', 'COLD', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*GLAZE.*', 'COLD', Data$EVTYPE)
+
+Data$EVTYPE <- gsub('.*HEAT.*', 'HEAT', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*WARM.*', 'HEAT', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*HIGH.*TEMP.*', 'HEAT', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*EXTREME HEAT.*', 'HEAT', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*HYPERTHERMIA.*', 'HEAT', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*DROUGHT.*', 'HEAT', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*DRY.*', 'HEAT', Data$EVTYPE)
+
+Data$EVTYPE <- gsub('.*HURRICANE.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*WIND.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*TYPHOON.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*MICROBURST.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*TROPICAL DEPRESSION.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*TURBULENCE.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*DOWNBURST.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*GUSTNADO.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*CURRENT.*', 'WIND', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*TSTMW.*', 'WIND', Data$EVTYPE)
+
+Data$EVTYPE <- gsub('.*TIDE.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*SURF.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*FLOOD.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*WATER.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*SEA.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*TSUNAMI.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*DROWNING.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*SEICHE.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*DAM BREAK.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*HIGH.*', 'WATER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*WAVE.*', 'WATER', Data$EVTYPE)
+
+Data$EVTYPE <- gsub('.*STORM.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*HAIL.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*BLIZZARD.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*RAIN.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*FOG.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*SMOKE.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*CLOUD.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*DUST.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*SLEET.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*LIGNTNING.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*LIGHTNING.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*LIGHTING.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*WET.*', 'WEATHER', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*HEAVY.*', 'WEATHER', Data$EVTYPE)
+
+Data$EVTYPE <- gsub('.*TORNADO.*', 'TORNADO', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*LANDSPOUT.*', 'TORNADO', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*TORNDAO.*', 'TORNADO', Data$EVTYPE)
+
+Data$EVTYPE <- gsub('.*FIRE.*', 'FIRE', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*SLIDE.*', 'Geological', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*EROSION.*', 'Geological', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*VOLCANIC.*', 'Geological', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*AVALANCHE.*', 'Geological', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*AVALANCE.*', 'Geological', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*COASTAL SURGE.*', 'Geological', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*LANDSLUMP.*', 'Geological', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*APACHE COUNTY.*', 'Geological', Data$EVTYPE)
+
+Data$EVTYPE <- gsub('.*MARINE.*', 'HUMAN', Data$EVTYPE)
+Data$EVTYPE <- gsub('.*URBAN.*', 'HUMAN', Data$EVTYPE)
+
+
+unique(Data$EVTYPE)
+```
+
+##Result
+1.Added a calculated field for health damage, and pre-aggregated the result, and then plot
+```{r}
+#Graph 1
+Data <- Data %>% mutate(health = FATALITIES + INJURIES) 
+
+Graph1 <- Data %>%
+  group_by(EVTYPE) %>%
+  select(health,EVTYPE) %>%
+  summarise(
+    healthDamage = sum(health, na.rm = TRUE)
+  )
+
+Plot1 <- ggplot(Graph1, aes(x= EVTYPE, y= healthDamage))+ 
+  geom_bar(stat = "identity",position = "dodge") +
+  geom_text(aes(label =healthDamage), 
+            position=position_dodge(width=0.9), vjust=-0.25)
+
+Plot1
+```
+
+
+2.Clean up the exponential, added a calculated field for economic damage, 
+    and pre-aggregated the result, and then plot
+```{r}
+#Graph 2
+Data$PROPDMGEXP <- toupper(Data$PROPDMGEXP)
+Data$CROPDMGEXP <- toupper(Data$CROPDMGEXP)
+
+Data <- Data %>%
+  filter(PROPDMGEXP %in% c("M","K","H","B"))
+
+Data <- Data %>%
+  filter(CROPDMGEXP %in% c("M","K","H","B"))
+
+Data$PROPDMGEXP <- gsub("H", 10^2, Data$PROPDMGEXP)
+Data$PROPDMGEXP <- gsub("K", 10^3, Data$PROPDMGEXP)
+Data$PROPDMGEXP <- gsub("M", 10^6, Data$PROPDMGEXP)
+Data$PROPDMGEXP <- gsub("B", 10^9, Data$PROPDMGEXP)
+
+Data$CROPDMGEXP <- gsub("H", 10^2, Data$CROPDMGEXP)
+Data$CROPDMGEXP <- gsub("K", 10^3, Data$CROPDMGEXP)
+Data$CROPDMGEXP <- gsub("M", 10^6, Data$CROPDMGEXP)
+Data$CROPDMGEXP <- gsub("B", 10^9, Data$CROPDMGEXP)
+
+Data$PROPDMGEXP <- as.numeric(Data$PROPDMGEXP)
+Data$CROPDMGEXP <- as.numeric(Data$CROPDMGEXP)
+
+Data <- Data %>% 
+  mutate(Economic = PROPDMG * PROPDMGEXP + CROPDMG * CROPDMGEXP)
+
+
+Graph2 <- Data %>%
+  group_by(EVTYPE) %>%
+  select(Economic,EVTYPE) %>%
+  summarise(
+    EconomicDamage = sum(Economic, na.rm = TRUE)
+  )
+
+Plot2 <- ggplot(Graph2, aes(x= EVTYPE, y= EconomicDamage/10^9))+ 
+  geom_bar(stat = "identity",position = "dodge") +
+  geom_text(aes(label =format(round(EconomicDamage/10^9, 2), nsmall = 2) ), 
+            position=position_dodge(width=0.9), vjust=-0.25) +
+  ylab("Total Economic Damage (Unit Billions)")
+
+Plot2
+```
+
+
+##Summary
+Based on the analysis, the 'Tornado' is the major fact that causes the health damage.
+and 'Water' is the major fact that causes the economic damage.
