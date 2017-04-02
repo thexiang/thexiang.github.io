@@ -1,0 +1,135 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+BRFSS collect data from a randomly selected adult in a household in 50 states and also District of Columbia, Guam, and the Commonwealth of Puerto Rico. Therefore, the ramdon sampling is used, so the data is generalizable to the US adults.
+This dataset contains observational data, which is more suitable to find assciations bewteen variables. And the data is not randomly assigning, thus it's not suitable to find casulity.
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**  
+what is the association bewteen Wear Seat Belts (_rfseat3) and education level (educa).  
+we are interested this association because it can help us to better understand what group of people not always wear seat belts.  
+
+**\_rfseat3**: Always Wear Seat Belts  
+**educa**: Education Level  
+
+**Research quesion 2:**  
+what is the association bewteen obessed people (_bmi5cat) and depressive disorder (addepev2) at different income level (income2)  
+we are interested the association because we can better understand the relationship bewteen obessed people at different income level and depressive disorder.  
+
+**addepev2**: Ever Told You Had A Depressive Disorder  
+**\_bmi5cat**: Computed Body Mass Index Categories  
+**income2**: Income Level  
+
+**Research quesion 3:**  
+what is the association bewteen Income level and satisfction with life for male and female  
+we are interested to this because it can help us better understand if people are or not at different social classes for different genders.
+
+**income2**: Income Level  
+**lsatisfy**: Satisfaction With Life  
+**\_impcsex**: Imputed Child Gender
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+**Research quesion 1:**
+
+```{r}
+table(brfss2013$X_rfseat3)
+table(brfss2013$educa)
+
+plot1 <- brfss2013 %>% 
+  filter(X_rfseat3 != "NA" , educa != "NA") %>% 
+  mutate(educa1 = 
+ifelse(educa == 'College 4 years or more (College graduate)','College graduate','other')
+) %>%
+  select(X_rfseat3,educa1) 
+  ##group_by(X_rfseat3,educa) %>%
+  ##summarise(size = n())
+
+
+ggplot(data = plot1, aes(x = educa1,fill=X_rfseat3)) + 
+  geom_bar(position = "fill") + 
+  coord_flip() +
+  labs(y='percentage', x='education',fill='Always wear seat belt')
+```  
+  
+<span style="color:red">**the graph shows people who graduated from college have a higher percentage to wear seat bell. **</span>   
+
+**Research quesion 2:**
+
+```{r}
+table(brfss2013$addepev2)
+table(brfss2013$X_bmi5cat) 
+table(brfss2013$income2)
+
+plot2 <- brfss2013 %>% 
+  filter(addepev2 != "NA" , X_bmi5cat != "NA" , income2 != "NA") %>% 
+  mutate(Obese = ifelse(X_bmi5cat == 'Obese', 'Obese', 'Not Obese')) %>%
+  select(addepev2,Obese,income2) 
+
+
+
+ggplot(data = plot2, aes(x = income2,fill=addepev2)) + 
+  geom_bar(position = "fill") +
+  facet_wrap(~Obese) +
+  coord_flip() +
+  labs(x='income',y='Obses',fill='Depression')
+```  
+  
+<span style="color:red">**From the graph we can see Obese people have a slightly higher rate to have a depression, but the depression has a stronger relationship with income level, richer people tends to have less chance to have depression.**</span>  
+  
+    
+
+
+**Research quesion 3:**
+
+```{r}
+table(brfss2013$income2)
+table(brfss2013$lsatisfy) 
+table(brfss2013$X_impcsex)
+
+plot3 <- brfss2013 %>% 
+  filter(lsatisfy != "NA" , X_impcsex != "NA" , income2 != "NA") %>% 
+  select(lsatisfy , X_impcsex , income2) 
+
+ggplot(data = plot3, aes(x = income2,fill=lsatisfy)) + 
+  geom_bar(position = "fill") +
+  facet_wrap(~X_impcsex) +
+  coord_flip() +
+  labs(x='income', y='gender', fill='statisfication with life')
+```  
+  
+<span style="color:red">**richer people tends to be more satisfier to their life, and it’s true to both gender.**  </span>
+  
+    
+
+
