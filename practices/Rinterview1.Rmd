@@ -1,0 +1,74 @@
+---
+title: "Data Clean Practice"
+author: "Xiang Xu"
+date: "April 1, 2017"
+output: html_document
+---
+1> Take Monthly average for all metals and S&P , make sure they are in same order by date  
+2> load that dataset into R   
+3> plot histogram and check normality of data  
+4> Make transformation of data if needed, plot their histogram  
+
+```{r message=FALSE,warning = FALSE}
+library(dplyr)
+data <- read.csv('Rinterview1Data.csv')
+
+head(data)
+
+SP500 <- data %>% select(Date,Money = S.P.500) %>% mutate(Category = "S.P.500")
+temp <- sub(',','',as.character(SP500$Money))
+temp <- sub('\\$','',as.character(temp))
+SP500$Money <- as.numeric(sub('\\,','',as.character(temp)))
+
+
+
+Gold <- data %>% 
+  select(Date = Date.1,Money = Gold) %>% 
+  filter(Date != "NA", Date !='') %>% 
+  mutate(Category = "Gold")
+temp <- sub(',','',as.character(Gold$Money))
+temp <- sub('\\$','',as.character(temp))
+Gold$Money <- as.numeric(sub('\\,','',as.character(temp)))
+
+
+Platinum <- data %>% 
+  select(Date = Date.2,Money = Platinum) %>% 
+  filter(Date != "NA", Date !='') %>% 
+  mutate(Category = "Platinum")
+temp <- sub(',','',as.character(Platinum$Money))
+temp <- sub('\\$','',as.character(temp))
+Platinum$Money <- as.numeric(sub('\\,','',as.character(temp)))
+
+
+Copper <- data %>% 
+  select(Date = Date.3,Money = Copper) %>% 
+  filter(Date != "NA", Date !='') %>%  
+  mutate(Category = "Copper")
+temp <- sub(',','',as.character(Copper$Money))
+temp <- sub('\\$','',as.character(temp))
+Copper$Money <- as.numeric(sub('\\,','',as.character(temp)))
+
+Silver <- data %>% 
+  select(Date = Date.4,Money = Silver) %>% 
+  filter(Date != "NA", Date !='') %>% 
+  mutate(Category = "Silver")
+temp <- sub(',','',as.character(Silver$Money))
+temp <- sub('\\$','',as.character(temp))
+Silver$Money <- as.numeric(sub('\\,','',as.character(temp)))
+
+data_clean <- SP500 %>% 
+  union_all(Gold) %>% 
+  union_all(Platinum) %>% 
+  union_all(Copper) %>% 
+  union_all(Silver)
+
+##Monthly Avg
+data_clean %>% 
+  mutate(YearMonth = substr(data_clean$Date,1,7)) %>% 
+  group_by(Category,YearMonth) %>% 
+  summarise(avg = mean(Money))
+
+#normality
+hist(data_clean$Money)
+```
+
